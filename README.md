@@ -185,14 +185,3 @@ video-rotation-saver/
 ├── install.ps1
 └── README.md
 ```
-
-## Manual test matrix
-
-- [ ] MP4 rotated 90° CW — plays correctly in VLC after fix
-- [ ] MP4 rotated 180° — plays correctly in Windows Media Player after fix
-- [ ] MKV rotated 90° CCW — remuxed to .mp4, plays correctly in VLC and Chrome
-- [ ] File with spaces/unicode in path
-- [ ] File on a network drive (should still work or fail gracefully)
-- [ ] AVI file (should fail with clear error, not crash or silently re-encode)
-- [ ] PotPlayer not running when hotkey is pressed (should fail gracefully)
-- [ ] PotPlayer running but nothing loaded (should fail gracefully)
