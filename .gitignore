@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+.venv-build/
+venv/
+
+# Build output
+build/
+dist/
+*.spec.bak
+
+# Local app/runtime files
+*.log
+*.bak
+config.ini
+
+# IDE/editor
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+
+# Windows
+Thumbs.db
+Desktop.ini
+
