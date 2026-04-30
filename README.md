@@ -28,9 +28,9 @@
 
 # Video Rotation Saver
 
-Fix video rotation metadata losslessly while watching in PotPlayer, triggered by a global hotkey. Press the rotation hotkey, the current file is closed, ffmpeg rewrites the display-rotation flag, and PotPlayer reopens at the same timestamp. Press the rename hotkey to rename the current video and reopen it in place. MPC, VLC & Other player supoort will be added in future releases if the demand presents itself.
+Fix video rotation metadata losslessly while watching in PotPlayer, triggered by a global hotkey. Press the rotation hotkey, the current file is closed, ffmpeg rewrites the display-rotation flag, and PotPlayer reopens at the same timestamp. Press the rename hotkey to rename the current video and reopen it in place. MPC, VLC, and other player support may be added in future releases if demand presents itself.
 
-<u>***Note: PotPlayer -> Preferences -> Playback -> "Auto rotate files based on metadata" must be enabled within Pot Player for this to work.***</u>
+<u>***Note: PotPlayer -> Preferences -> Playback -> "Auto rotate files based on metadata" must be enabled within PotPlayer for this to work.***</u>
 
 ## How it works
 
@@ -101,7 +101,7 @@ wscript .\run_silent.vbs
 4. Press the configured rename hotkey to enter a new filename for the current video. The app closes the file, renames it on disk, and reopens it in the same PotPlayer window.
 5. To undo a rotation: delete the new file and rename the `.bak` back.
 
-Each hotkey press advances rotation by **+90° CW**. Four presses returns to the starting orientation (with a few seconds of ffmpeg work each time, since we don't buffer intermediate state in Phase 1).
+Each hotkey press advances rotation by **+90° CW**. Four presses returns to the starting orientation, with a few seconds of ffmpeg work each time.
 
 The rename prompt edits only the file name, not the extension. Video Rotation Saver preserves the original extension automatically.
 
@@ -156,9 +156,9 @@ Rare but possible, because the CW/CCW sign conventions are inverted between the 
 **Daemon does nothing on hotkey press.**
 Open the log. Most likely: PotPlayer isn't the 64-bit window class (`PotPlayer64`) the tool looks for, or it's elevated and the daemon isn't (a non-elevated daemon can't `SendMessage` into an elevated window). Run both un-elevated.
 
-## Known limitations (Phase 1)
+## Known limitations
 
-- No preview. You pick blindly and check the result after PotPlayer reopens. Phase 2 fixes this.
+- No preview yet. You pick the rotation and check the result after PotPlayer reopens.
 - Hotkey always rotates +90° CW per press. No `--angle` picker from the hotkey. (You can run `python -m potplayer_rotate rotate --angle 180` from a terminal to hit a specific angle.)
 - Network-mounted files work but are slow (ffmpeg has to re-copy stream bytes).
 
@@ -185,3 +185,4 @@ video-rotation-saver/
 ├── install.ps1
 └── README.md
 ```
+

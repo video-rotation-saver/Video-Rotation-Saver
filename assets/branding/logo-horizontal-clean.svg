@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="720" viewBox="0 0 1800 720" role="img" aria-labelledby="title desc">
+  <title id="title">Video Rotation Saver horizontal logo</title>
+  <desc id="desc">Clean horizontal logo without angle text.</desc>
+  <defs>
+    <linearGradient id="panel" x1="0" y1="0" x2="1800" y2="720" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b1d33"/>
+      <stop offset="0.58" stop-color="#061226"/>
+      <stop offset="1" stop-color="#020913"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="370" y1="120" x2="720" y2="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00d4ff"/>
+      <stop offset="0.5" stop-color="#39a9ff"/>
+      <stop offset="1" stop-color="#1565ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1800" height="720" rx="48" fill="url(#panel)"/>
+  <path d="M1130 125c230 6 409 82 548 205" fill="none" stroke="#1565ff" stroke-width="5" opacity="0.18"/>
+  <path d="M68 641c262-28 481-97 656-238" fill="none" stroke="#00d4ff" stroke-width="5" opacity="0.15"/>
+  <g transform="translate(124 102) scale(.62)">
+    <rect x="64" y="64" width="896" height="896" rx="178" fill="#07162c"/>
+    <path d="M298 676a278 278 0 0 0 315 83 278 278 0 0 0 149-110" fill="none" stroke="#1565ff" stroke-width="64" stroke-linecap="round"/>
+    <path d="M750 619l50 121-132-19z" fill="#1565ff"/>
+    <path d="M732 354a278 278 0 0 0-315-83 278 278 0 0 0-149 110" fill="none" stroke="url(#accent)" stroke-width="64" stroke-linecap="round"/>
+    <path d="M280 411l-50-121 132 19z" fill="#00d4ff"/>
+    <path d="M368 355h288c39 0 71 32 71 71v172c0 39-32 71-71 71H368c-39 0-71-32-71-71V426c0-39 32-71 71-71z" fill="#ffffff"/>
+    <path d="M392 407h240c22 0 40 18 40 40v130c0 22-18 40-40 40H392c-22 0-40-18-40-40V447c0-22 18-40 40-40z" fill="#07162c"/>
+    <path d="M481 454l109 63-109 63z" fill="#ffffff"/>
+  </g>
+  <line x1="740" y1="154" x2="740" y2="566" stroke="#e6f0ff" stroke-width="3" opacity="0.55"/>
+  <text x="820" y="270" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="112" font-weight="800" letter-spacing="0">VIDEO</text>
+  <text x="820" y="390" fill="#39a9ff" font-family="Segoe UI, Arial, sans-serif" font-size="112" font-weight="800" letter-spacing="0">ROTATION</text>
+  <text x="820" y="510" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="112" font-weight="800" letter-spacing="0">SAVER</text>
+  <text x="824" y="590" fill="#a9c7f8" font-family="Segoe UI, Arial, sans-serif" font-size="32" font-weight="500" letter-spacing="4">ROTATE. SAVE. ENJOY.</text>
+</svg>

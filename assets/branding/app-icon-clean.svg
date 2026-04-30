@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Video Rotation Saver app icon</title>
+  <desc id="desc">A rounded dark app icon with a video play symbol surrounded by rotating arrows.</desc>
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="900" y2="940" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b1d33"/>
+      <stop offset="0.55" stop-color="#061226"/>
+      <stop offset="1" stop-color="#020913"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="250" y1="210" x2="760" y2="795" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00d4ff"/>
+      <stop offset="0.42" stop-color="#39a9ff"/>
+      <stop offset="1" stop-color="#1565ff"/>
+    </linearGradient>
+    <linearGradient id="ringDeep" x1="270" y1="825" x2="760" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f4bd6"/>
+      <stop offset="1" stop-color="#05255f"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="26" flood-color="#000000" flood-opacity="0.35"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#00d4ff" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="178" fill="url(#bg)"/>
+  <path d="M122 858c118 42 268 53 432 8 176-49 285-153 348-274" fill="none" stroke="#12336f" stroke-width="12" opacity="0.45"/>
+  <path d="M152 214c110-55 245-74 392-38 183 44 300 152 371 291" fill="none" stroke="#0d5dba" stroke-width="10" opacity="0.35"/>
+  <g filter="url(#softShadow)">
+    <path d="M298 676a278 278 0 0 0 315 83 278 278 0 0 0 149-110" fill="none" stroke="url(#ringDeep)" stroke-width="64" stroke-linecap="round"/>
+    <path d="M750 619l50 121-132-19z" fill="#1565ff"/>
+    <path d="M732 354a278 278 0 0 0-315-83 278 278 0 0 0-149 110" fill="none" stroke="url(#ring)" stroke-width="64" stroke-linecap="round"/>
+    <path d="M280 411l-50-121 132 19z" fill="#00d4ff"/>
+    <path d="M368 355h288c39 0 71 32 71 71v172c0 39-32 71-71 71H368c-39 0-71-32-71-71V426c0-39 32-71 71-71z" fill="#ffffff"/>
+    <path d="M392 407h240c22 0 40 18 40 40v130c0 22-18 40-40 40H392c-22 0-40-18-40-40V447c0-22 18-40 40-40z" fill="#07162c"/>
+    <path d="M481 454l109 63-109 63z" fill="#ffffff"/>
+  </g>
+</svg>
