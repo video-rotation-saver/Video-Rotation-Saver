@@ -53,16 +53,20 @@ def session_state() -> SessionState:
 
 def _run(cmd: list[str], *, capture: bool = True, timeout: float = 600.0) -> subprocess.CompletedProcess:
     log.info("exec: %s", cmd)
-    return subprocess.run(
-        cmd,
-        check=False,
-        capture_output=capture,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=timeout,
-        creationflags=_CREATE_NO_WINDOW,
-    )
+    try:
+        return subprocess.run(
+            cmd,
+            check=False,
+            capture_output=capture,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            creationflags=_CREATE_NO_WINDOW,
+        )
+    except OSError as e:
+        log.error("failed to start %s: %s", cmd[0], e)
+        return subprocess.CompletedProcess(cmd, 1, "", f"failed to start {cmd[0]}: {e}")
 
 
 @dataclass

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import configparser
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -70,6 +71,48 @@ def _auto_detect_potplayer() -> str:
     return ""
 
 
+def _app_dirs() -> list[Path]:
+    dirs: list[Path] = []
+    if getattr(sys, "frozen", False):
+        dirs.append(Path(sys.executable).resolve().parent)
+        bundle_dir = getattr(sys, "_MEIPASS", None)
+        if bundle_dir:
+            dirs.append(Path(bundle_dir).resolve())
+    dirs.append(Path(__file__).resolve().parent.parent)
+    return dirs
+
+
+def _resolve_executable(value: str, fallback_name: str) -> str:
+    raw = (value or "").strip() or fallback_name
+    candidate = Path(raw)
+
+    if candidate.is_file():
+        return str(candidate.resolve())
+
+    if candidate.parent != Path("."):
+        return raw
+
+    for app_dir in _app_dirs():
+        bundled = app_dir / f"{raw}.exe"
+        if bundled.is_file():
+            return str(bundled.resolve())
+        bundled = app_dir / raw
+        if bundled.is_file():
+            return str(bundled.resolve())
+
+    try:
+        found = shutil.which(raw)
+    except OSError:
+        found = None
+    if found:
+        try:
+            return str(Path(found).resolve())
+        except OSError:
+            return found
+
+    return raw
+
+
 def _write_defaults(p: Path) -> None:
     cp = configparser.ConfigParser()
     for section, items in DEFAULTS.items():
@@ -97,22 +140,15 @@ def load_config() -> Config:
         return DEFAULTS[section][key]
 
     potplayer = get("potplayer", "potplayer_path") or _auto_detect_potplayer()
-    ffmpeg = get("ffmpeg", "ffmpeg_path") or "ffmpeg"
-    if ffmpeg == "ffmpeg":
-        which = shutil.which("ffmpeg")
-        if which:
-            ffmpeg = which
-    ffprobe = get("ffmpeg", "ffprobe_path") or "ffprobe"
-    if ffprobe == "ffprobe":
-        which = shutil.which("ffprobe")
-        if which:
-            ffprobe = which
+    ffmpeg = _resolve_executable(get("ffmpeg", "ffmpeg_path"), "ffmpeg")
+    ffprobe = _resolve_executable(get("ffmpeg", "ffprobe_path"), "ffprobe")
+    mkvpropedit = _resolve_executable(get("ffmpeg", "mkvpropedit_path"), "mkvpropedit")
 
     return Config(
         potplayer_path=potplayer,
         ffmpeg_path=ffmpeg,
         ffprobe_path=ffprobe,
-        mkvpropedit_path=get("ffmpeg", "mkvpropedit_path"),
+        mkvpropedit_path=mkvpropedit,
         backup_behavior=get("safety", "backup_behavior"),
         popup_position=get("ui", "popup_position"),
         rotation_hotkey=get("ui", "rotation_hotkey"),
