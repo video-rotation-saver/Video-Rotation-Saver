@@ -85,7 +85,9 @@ def probe(path: Path, cfg: Config) -> StreamInfo:
         "-show_streams",
         str(path),
     ]
+    started = time.monotonic()
     cp = _run(cmd, timeout=30)
+    log.info("timing: ffprobe %.2fs", time.monotonic() - started)
     if cp.returncode != 0:
         raise RuntimeError(f"ffprobe failed: {cp.stderr.strip() or cp.stdout.strip()}")
     data = json.loads(cp.stdout or "{}")
@@ -247,7 +249,9 @@ def apply_rotation(
                "Re-encoding would be required and is not supported by this tool.")
         return RotateResult(False, None, 0, target_cw, msg)
 
+    started = time.monotonic()
     info = probe(src, cfg)
+    log.info("timing: probe-before-rotate %.2fs", time.monotonic() - started)
     prev_cw = ccw_to_cw(info.current_rotation_ccw)
     if prev_cw == (target_cw % 360):
         return RotateResult(True, src, prev_cw, target_cw, "Rotation unchanged.")
@@ -265,18 +269,24 @@ def _rotate_mp4_like(src: Path, target_cw: int, prev_cw: int, cfg: Config) -> Ro
     tmp = src.with_name(src.stem + ".rotating.tmp" + src.suffix)
     delta_cw = (target_cw - prev_cw) % 360
     try:
+        started = time.monotonic()
         cp = _ffmpeg_mp4_transcode_rotate(src, tmp, delta_cw, cfg)
+        log.info("timing: ffmpeg-transcode %.2fs", time.monotonic() - started)
         if cp.returncode != 0:
             err = (cp.stderr or cp.stdout or "").strip()
             log.error("ffmpeg failed: %s", err)
             _safe_unlink(tmp)
             return RotateResult(False, None, prev_cw, target_cw, f"ffmpeg failed: {err[:500]}")
+        started = time.monotonic()
         ok, why = _verify_output(tmp, cfg)
+        log.info("timing: verify-output %.2fs", time.monotonic() - started)
         if not ok:
             log.error("output verification failed: %s", why)
             _safe_unlink(tmp)
             return RotateResult(False, None, prev_cw, target_cw, why)
+        started = time.monotonic()
         new_path = _swap_in(src, tmp, cfg)
+        log.info("timing: swap-in %.2fs", time.monotonic() - started)
         return RotateResult(True, new_path, prev_cw, target_cw, "Rotation applied.")
     except Exception as e:
         log.exception("mp4 rotation unexpected failure")
@@ -317,21 +327,27 @@ def _rotate_mkv_via_remux(
     delta_cw = (target_cw - prev_cw) % 360
     tmp = src.with_name(src.stem + ".rotating.tmp.mp4")
     try:
+        started = time.monotonic()
         cp = _ffmpeg_mkv_transcode_rotate(src, tmp, delta_cw, cfg)
+        log.info("timing: mkv-transcode %.2fs", time.monotonic() - started)
         if cp.returncode != 0:
             err = (cp.stderr or cp.stdout or "").strip()
             log.error("mkv transcode failed: %s", err)
             _safe_unlink(tmp)
             return RotateResult(False, None, prev_cw, target_cw, f"ffmpeg failed: {err[:500]}")
+        started = time.monotonic()
         ok, why = _verify_output(tmp, cfg)
+        log.info("timing: verify-output %.2fs", time.monotonic() - started)
         if not ok:
             _safe_unlink(tmp)
             return RotateResult(False, None, prev_cw, target_cw, why)
 
         bak = _unique_backup(src)
+        started = time.monotonic()
         os.replace(src, bak)
         os.replace(tmp, dst_mp4)
         _apply_backup_policy(bak, cfg)
+        log.info("timing: mkv-swap-in %.2fs", time.monotonic() - started)
         return RotateResult(True, dst_mp4, prev_cw, target_cw, "Converted to .mp4 with rotation.")
     except Exception as e:
         log.exception("mkv transcode unexpected failure")
@@ -372,6 +388,7 @@ def run_rotation_flow(
       5. Return the result. Success/error toasting is the caller's job.
     """
     cfg = load_config()
+    flow_started = time.monotonic()
 
     state = pp.snapshot_state(anchor)
     if state.play_status is None or state.play_status == -1 or not state.has_file:
@@ -381,7 +398,17 @@ def run_rotation_flow(
                             "position' is enabled in PotPlayer.")
 
     assert state.file_path is not None
-    current_cw = ccw_to_cw(probe(state.file_path, cfg).current_rotation_ccw)
+    ext = state.file_path.suffix.lower()
+    if ext in _UNSUPPORTED_EXTS:
+        return RotateResult(
+            False, None, 0, 0,
+            f"{ext} container isn't supported by this tool. Playback was left alone.",
+        )
+
+    started = time.monotonic()
+    info = probe(state.file_path, cfg)
+    log.info("timing: preflight-probe %.2fs", time.monotonic() - started)
+    current_cw = ccw_to_cw(info.current_rotation_ccw)
     if delta_cw is not None:
         target_cw = (current_cw + delta_cw) % 360
     elif absolute_cw is not None:
@@ -393,19 +420,50 @@ def run_rotation_flow(
         return RotateResult(True, state.file_path, current_cw, target_cw,
                             "Rotation unchanged.")
 
+    if ext in _MKV_EXTS:
+        acodec = (info.audio_codec or "").lower() if info.audio_codec else ""
+        if acodec and acodec not in _MP4_OK_AUDIO:
+            return RotateResult(
+                False, None, current_cw, target_cw,
+                f"This MKV's audio codec ({acodec}) isn't supported in MP4. Playback was left alone.",
+            )
+        dst_mp4 = state.file_path.with_suffix(".mp4")
+        if dst_mp4.exists() and dst_mp4.resolve() != state.file_path.resolve():
+            return RotateResult(
+                False, None, current_cw, target_cw,
+                f"Refusing to overwrite existing file: {dst_mp4.name}. Playback was left alone.",
+            )
+        if not _session_state.mkv_remux_confirmed:
+            ok = confirm_yes_no(
+                f"This is an MKV file. To apply rotation, {APP_NAME}\n"
+                "will re-encode it into a new .mp4 file next to the original.\n\n"
+                "The .mkv will be kept as a .bak backup.\n"
+                "This asks once per session; subsequent MKVs will convert without prompting.\n\n"
+                "Proceed?",
+                title=f"{APP_NAME} - MKV -> MP4",
+            )
+            if not ok:
+                return RotateResult(False, None, current_cw, target_cw,
+                                    "Cancelled. Playback was left alone.")
+            _session_state.mkv_remux_confirmed = True
+
     resume_s = max(0.0, (state.position_ms or 0) / 1000.0)
     log.info("flow start hwnd=%d pid=%d file=%s cur=%d target=%d resume=%.2fs",
              anchor.hwnd, anchor.pid, state.file_path, current_cw, target_cw, resume_s)
 
     # Step 1: close the file on THIS HWND.
+    started = time.monotonic()
     pp.close_current_file(anchor.hwnd)
     if not pp.wait_until_file_released(state.file_path, timeout_s=5.0):
         # Don't give up entirely — try the rotation anyway; if ffmpeg fails
         # due to a lingering lock we'll report it.
         log.warning("file still locked after 5s; proceeding")
+    log.info("timing: close-and-release-wait %.2fs", time.monotonic() - started)
 
     # Step 2: rotate.
+    started = time.monotonic()
     result = apply_rotation(state.file_path, target_cw, cfg, _session_state)
+    log.info("timing: apply-rotation %.2fs", time.monotonic() - started)
     log.info("rotate ok=%s msg=%s new=%s", result.ok, result.message, result.new_path)
 
     # Step 3: reopen on the SAME HWND (if still alive).
@@ -416,14 +474,18 @@ def run_rotation_flow(
         log.info("reopen: anchor hwnd=%d no longer exists — skipping", anchor.hwnd)
         return result
 
+    started = time.monotonic()
     dropped = pp.post_file_drop(anchor.hwnd, target_path)
+    log.info("timing: post-file-drop %.2fs", time.monotonic() - started)
     log.info("reopen: WM_DROPFILES posted -> %s", dropped)
     if not dropped:
         log.warning("reopen: falling back to CLI /current launch")
         pp.launch_file_via_cli(cfg.potplayer_path, target_path, resume_s)
         return result
 
+    started = time.monotonic()
     playing = pp.wait_until_playing(anchor.hwnd, timeout_s=4.0)
+    log.info("timing: wait-until-playing %.2fs", time.monotonic() - started)
     log.info("reopen: wait_until_playing -> %s (resume=%.2fs)", playing, resume_s)
     if not playing:
         # PotPlayer didn't pick up the drop. Fall through to CLI as a rescue.
@@ -432,9 +494,12 @@ def run_rotation_flow(
         return result
 
     if resume_s > 0.1:
+        started = time.monotonic()
         pp.seek_ms(anchor.hwnd, int(resume_s * 1000))
+        log.info("timing: seek %.2fs", time.monotonic() - started)
         log.info("reopen: seeked to %.2fs", resume_s)
 
+    log.info("timing: rotation-flow-total %.2fs", time.monotonic() - flow_started)
     return result
 
 
